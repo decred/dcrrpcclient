@@ -36,6 +36,7 @@ var (
 type notificationState struct {
 	sync.Mutex
 	notifyBlocks                bool
+	notifyVotes                 bool
 	notifyWinningTickets        bool
 	notifySpentAndMissedTickets bool
 	notifyNewTickets            bool

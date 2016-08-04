@@ -252,6 +252,9 @@ func (c *Client) trackRegisteredNtfns(cmd interface{}) {
 	case *dcrjson.NotifyBlocksCmd:
 		c.ntfnState.notifyBlocks = true
 
+	case *dcrjson.NotifyVotesCmd:
+		c.ntfnState.notifyVotes = true
+
 	case *dcrjson.NotifyNewTransactionsCmd:
 		if bcmd.Verbose != nil && *bcmd.Verbose {
 			c.ntfnState.notifyNewTxVerbose = true
@@ -488,6 +491,14 @@ func (c *Client) reregisterNtfns() error {
 	if stateCopy.notifyBlocks {
 		log.Debugf("Reregistering [notifyblocks]")
 		if err := c.NotifyBlocks(); err != nil {
+			return err
+		}
+	}
+
+	// Reregister notifyvotes if needed.
+	if stateCopy.notifyVotes {
+		log.Debugf("Reregistering [notifyvotes]")
+		if err := c.NotifyVotes(); err != nil {
 			return err
 		}
 	}
