@@ -1386,6 +1386,44 @@ func (c *Client) NotifyBlocks() error {
 	return c.NotifyBlocksAsync().Receive()
 }
 
+// FutureNotifyVotesResult is a future promise to deliver the result of a
+// NotifyBlocksAsync RPC invocation (or an applicable error).
+type FutureNotifyVotesResult chan *response
+
+// Receive waits for the response promised by the future and returns an error
+// if the registration was not successful.
+func (r FutureNotifyVotesResult) Receive() error {
+	_, err := receiveFuture(r)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// NotifyVotesAsync returns an instance of a type that can be used to get the
+// result of the RPC at some future time by invoking the Receive function on
+// the returned instance.
+//
+// See NotifyVotes for the blocking version and more details.
+//
+// NOTE: This is a dcrd extension and requires a websocket connection.
+func (c *Client) NotifyVotesAsync() FutureNotifyVotesResult {
+	// Not supported in HTTP POST mode.
+	if c.config.HTTPPostMode {
+		return newFutureError(ErrWebsocketsRequired)
+	}
+
+	// Ignore the notification if the client is not interested in
+	// notifications.
+	if c.ntfnHandlers == nil {
+		return newNilFutureResult()
+	}
+
+	cmd := dcrjson.NewNotifyVotesCmd()
+	return c.sendCmd(cmd)
+}
+
 // NotifyVotes registers the client to receive notifications when new votes are
 // received.  The notifications are
 // delivered to the notification handlers associated with the client.  Calling
