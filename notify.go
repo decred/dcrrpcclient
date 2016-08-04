@@ -113,6 +113,12 @@ type NotificationHandlers struct {
 	OnBlockDisconnected func(hash *chainhash.Hash, height int32, t time.Time,
 		vb uint16)
 
+	// OnNewVote is invoked when a new vote is recieved.  It will
+	// only be invoked if a preceding call to NotifyVotes has
+	// been made to register for the notification and the function
+	// is non-nil.
+	OnNewVote func(voteHash, blockHash string, vote bool)
+
 	// OnReorganization is invoked when the blockchain begins reorganizing.
 	// It will only be invoked if a preceding call to NotifyBlocks has been
 	// made to register for the notification and the function is non-nil.
@@ -295,6 +301,24 @@ func (c *Client) handleNotification(ntfn *rawNotification) {
 
 		c.ntfnHandlers.OnBlockDisconnected(blockSha, blockHeight, blockTime,
 			voteBits)
+
+	// OnNewVote
+	case dcrjson.NewVoteNtfnMethod:
+		// Ignore the notification if the client is not interested in
+		// it.
+		if c.ntfnHandlers.OnNewVote == nil {
+			return
+		}
+
+		voteHash, blockHash, vote, err :=
+			parseChainNtfnParams(ntfn.Params)
+		if err != nil {
+			log.Warnf("Received invalid new vote "+
+				"notification: %v", err)
+			return
+		}
+
+		c.ntfnHandlers.OnNewVote(voteHash, blockHash, vote)
 
 	case dcrjson.ReorganizationNtfnMethod:
 		// Ignore the notification if the client is not interested in
@@ -1360,6 +1384,20 @@ func (c *Client) NotifyBlocksAsync() FutureNotifyBlocksResult {
 // NOTE: This is a dcrd extension and requires a websocket connection.
 func (c *Client) NotifyBlocks() error {
 	return c.NotifyBlocksAsync().Receive()
+}
+
+// NotifyVotes registers the client to receive notifications when new votes are
+// received.  The notifications are
+// delivered to the notification handlers associated with the client.  Calling
+// this function has no effect if there are no notification handlers and will
+// result in an error if the client is configured to run in HTTP POST mode.
+//
+// The notifications delivered as a result of this call will be via one of
+// OnNewVote
+//
+// NOTE: This is a dcrd extension and requires a websocket connection.
+func (c *Client) NotifyVotes() error {
+	return c.NotifyVotesAsync().Receive()
 }
 
 // FutureNotifyWinningTicketsResult is a future promise to deliver the result of a
