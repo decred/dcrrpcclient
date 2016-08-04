@@ -312,7 +312,7 @@ func (c *Client) handleNotification(ntfn *rawNotification) {
 		}
 
 		voteHash, blockHash, vote, err :=
-			parseChainNtfnParams(ntfn.Params)
+			parseVoteNtfnParams(ntfn.Params)
 		if err != nil {
 			log.Warnf("Received invalid new vote "+
 				"notification: %v", err)
@@ -695,6 +695,37 @@ func parseChainNtfnParams(params []json.RawMessage) (*chainhash.Hash,
 	blockTime := time.Unix(blockTimeUnix, 0)
 
 	return blockSha, blockHeight, blockTime, voteBits, nil
+}
+
+// parseVoteNtfnParams parses out the hashes and vote from the parameters
+// of onnewvote notifications.
+func parseVoteNtfnParams(params []json.RawMessage) (string, string, bool, error) {
+	if len(params) != 3 {
+		return "", "", false, wrongNumParams(len(params))
+	}
+
+	// Unmarshal first parameter as a string.
+	var voteHash string
+	err := json.Unmarshal(params[0], &voteHash)
+	if err != nil {
+		return "", "", false, err
+	}
+
+	// Unmarshal second parameter as an string.
+	var blockHash string
+	err = json.Unmarshal(params[1], &blockHash)
+	if err != nil {
+		return "", "", false, err
+	}
+
+	// Unmarshal third parameter as bool.
+	var vote bool
+	err = json.Unmarshal(params[2], &vote)
+	if err != nil {
+		return "", "", false, err
+	}
+
+	return voteHash, blockHash, vote, nil
 }
 
 func parseReorganizationNtfnParams(params []json.RawMessage) (*chainhash.Hash,
