@@ -1021,14 +1021,14 @@ func (r FutureSendToSSGenResult) Receive() (*chainhash.Hash, error) {
 func (c *Client) SendToSSGenAsync(fromAccount string,
 	tickethash chainhash.Hash,
 	blockhash chainhash.Hash,
-	height int64,
+	height uint32,
 	votebits uint16) FutureSendToSSGenResult {
 
 	ticketHashString := hex.EncodeToString([]byte(tickethash[:]))
 	blockHashString := hex.EncodeToString([]byte(blockhash[:]))
 
 	cmd := dcrjson.NewSendToSSGenCmd(fromAccount, ticketHashString,
-		blockHashString, height, votebits, nil)
+		blockHashString, int64(height), votebits, nil)
 
 	return c.sendCmd(cmd)
 }
@@ -1044,7 +1044,7 @@ func (c *Client) SendToSSGenAsync(fromAccount string,
 func (c *Client) SendToSSGen(fromAccount string,
 	tickethash chainhash.Hash,
 	blockhash chainhash.Hash,
-	height int64,
+	height uint32,
 	votebits uint16) (*chainhash.Hash, error) {
 
 	return c.SendToSSGenAsync(fromAccount, tickethash, blockhash, height, votebits).Receive()
@@ -1058,7 +1058,7 @@ func (c *Client) SendToSSGen(fromAccount string,
 func (c *Client) SendToSSGenCommentAsync(fromAccount string,
 	tickethash chainhash.Hash,
 	blockhash chainhash.Hash,
-	height int64,
+	height uint32,
 	votebits uint16,
 	comment string) FutureSendToSSGenResult {
 
@@ -1066,7 +1066,7 @@ func (c *Client) SendToSSGenCommentAsync(fromAccount string,
 	blockHashString := hex.EncodeToString([]byte(blockhash[:]))
 
 	cmd := dcrjson.NewSendToSSGenCmd(fromAccount, ticketHashString,
-		blockHashString, height, votebits, &comment)
+		blockHashString, int64(height), votebits, &comment)
 
 	return c.sendCmd(cmd)
 }
@@ -1084,7 +1084,7 @@ func (c *Client) SendToSSGenCommentAsync(fromAccount string,
 func (c *Client) SendToSSGenComment(fromAccount string,
 	tickethash chainhash.Hash,
 	blockhash chainhash.Hash,
-	height int64,
+	height uint32,
 	votebits uint16,
 	comment string) (*chainhash.Hash, error) {
 

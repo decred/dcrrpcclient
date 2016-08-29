@@ -22,10 +22,10 @@ func main() {
 	// for notifications.  See the documentation of the dcrrpcclient
 	// NotificationHandlers type for more details about each handler.
 	ntfnHandlers := dcrrpcclient.NotificationHandlers{
-		OnBlockConnected: func(hash *chainhash.Hash, height int32, time time.Time, vb uint16) {
+		OnBlockConnected: func(hash *chainhash.Hash, height uint32, time time.Time, vb uint16) {
 			log.Printf("Block connected: %v (%d) %v %v", hash, height, time, vb)
 		},
-		OnBlockDisconnected: func(hash *chainhash.Hash, height int32, time time.Time, vb uint16) {
+		OnBlockDisconnected: func(hash *chainhash.Hash, height uint32, time time.Time, vb uint16) {
 			log.Printf("Block disconnected: %v (%d) %v %v", hash, height, time, vb)
 		},
 	}
