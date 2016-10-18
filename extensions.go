@@ -508,19 +508,19 @@ func (c *Client) GetCurrentNet() (wire.CurrencyNet, error) {
 	return c.GetCurrentNetAsync().Receive()
 }
 
-// FutureGetHeadersResult is a future promise to delivere the result of a version
-// RPC invocation (or an applicable error).
+// FutureGetHeadersResult is a future promise to delivere the result of a
+// getheaders RPC invocation (or an applicable error).
 type FutureGetHeadersResult chan *response
 
-// Receive waits for the response promised by the future and returns the version
-// result.
+// Receive waits for the response promised by the future and returns the
+// getheaders result.
 func (r FutureGetHeadersResult) Receive() (*dcrjson.GetHeadersResult, error) {
 	res, err := receiveFuture(r)
 	if err != nil {
 		return nil, err
 	}
 
-	// Unmarsal result as a version result object.
+	// Unmarsal result as a getheaders result object.
 	var vr dcrjson.GetHeadersResult
 	err = json.Unmarshal(res, &vr)
 	if err != nil {
@@ -544,7 +544,9 @@ func (c *Client) GetHeadersAsync(blockLocators []chainhash.Hash, hashStop *chain
 	return c.sendCmd(cmd)
 }
 
-// GetHeaders returns information about the server's JSON-RPC API versions.
+// GetHeaders mimics the wire protocol getheaders and headers messages by
+// returning all headers on the main chain after the first known block in the
+// locators, up until a block hash matches hashStop.
 func (c *Client) GetHeaders(blockLocators []chainhash.Hash, hashStop *chainhash.Hash) (*dcrjson.GetHeadersResult, error) {
 	return c.GetHeadersAsync(blockLocators, hashStop).Receive()
 }
