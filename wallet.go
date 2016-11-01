@@ -3353,7 +3353,10 @@ func (c *Client) SetTicketsVoteBitsAsync(hashes []*chainhash.Hash, votesBits []s
 	if err != nil {
 		return newFutureError(err)
 	}
-	hashesConcat, _ := dcrjson.EncodeConcatenatedHashed(hashes)
+	hashesConcat, err := dcrjson.EncodeConcatenatedHashes(hashes)
+	if err != nil {
+		return newFutureError(err)
+	}
 	cmd := dcrjson.NewSetTicketsVoteBitsCmd(hashesConcat, vbs)
 	return c.sendCmd(cmd)
 }
