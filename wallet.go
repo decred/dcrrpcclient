@@ -3336,11 +3336,7 @@ type FutureSetTicketsVoteBitsResult chan *response
 // provided by the server.
 func (r FutureSetTicketsVoteBitsResult) Receive() error {
 	_, err := receiveFuture(r)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // SetTicketsVoteBitsAsync returns an instance of a type that can be used to
@@ -3353,10 +3349,11 @@ func (c *Client) SetTicketsVoteBitsAsync(hashes []*chainhash.Hash, votesBits []s
 	if err != nil {
 		return newFutureError(err)
 	}
-	hashesConcat, err := dcrjson.EncodeConcatenatedHashes(hashes)
-	if err != nil {
-		return newFutureError(err)
+	var hashSlice []chainhash.Hash
+	for i := range hashes {
+		hashSlice = append(hashSlice, *hashes[i])
 	}
+	hashesConcat := dcrjson.EncodeConcatenatedHashes(hashSlice)
 	cmd := dcrjson.NewSetTicketsVoteBitsCmd(hashesConcat, vbs)
 	return c.sendCmd(cmd)
 }
