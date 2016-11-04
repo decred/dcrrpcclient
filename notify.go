@@ -99,28 +99,28 @@ type NotificationHandlers struct {
 	// (best) chain.  It will only be invoked if a preceding call to
 	// NotifyBlocks has been made to register for the notification and the
 	// function is non-nil.
-	OnBlockConnected func(hash *chainhash.Hash, height int32, t time.Time,
+	OnBlockConnected func(hash *chainhash.Hash, height uint32, t time.Time,
 		vb uint16)
 
 	// OnBlockDisconnected is invoked when a block is disconnected from the
 	// longest (best) chain.  It will only be invoked if a preceding call to
 	// NotifyBlocks has been made to register for the notification and the
 	// function is non-nil.
-	OnBlockDisconnected func(hash *chainhash.Hash, height int32, t time.Time,
+	OnBlockDisconnected func(hash *chainhash.Hash, height uint32, t time.Time,
 		vb uint16)
 
 	// OnReorganization is invoked when the blockchain begins reorganizing.
 	// It will only be invoked if a preceding call to NotifyBlocks has been
 	// made to register for the notification and the function is non-nil.
-	OnReorganization func(oldHash *chainhash.Hash, oldHeight int32,
-		newHash *chainhash.Hash, newHeight int32)
+	OnReorganization func(oldHash *chainhash.Hash, oldHeight uint32,
+		newHash *chainhash.Hash, newHeight uint32)
 
 	// OnWinningTickets is invoked when a block is connected and eligible tickets
 	// to be voted on for this chain are given.  It will only be invoked if a
 	// preceding call to NotifyWinningTickets has been made to register for the
 	// notification and the function is non-nil.
 	OnWinningTickets func(blockHash *chainhash.Hash,
-		blockHeight int64,
+		blockHeight uint32,
 		tickets []*chainhash.Hash)
 
 	// OnSpentAndMissedTickets is invoked when a block is connected to the
@@ -128,7 +128,7 @@ type NotificationHandlers struct {
 	// invoked if a preceding call to NotifySpentAndMissedTickets has been made to
 	// register for the notification and the function is non-nil.
 	OnSpentAndMissedTickets func(hash *chainhash.Hash,
-		height int64,
+		height uint32,
 		stakeDiff int64,
 		tickets map[chainhash.Hash]bool)
 
@@ -137,7 +137,7 @@ type NotificationHandlers struct {
 	// if a preceding call to NotifyNewTickets has been made to register for the
 	// notification and the function is non-nil.
 	OnNewTickets func(hash *chainhash.Hash,
-		height int64,
+		height uint32,
 		stakeDiff int64,
 		tickets map[chainhash.Hash]chainhash.Hash)
 
@@ -146,7 +146,7 @@ type NotificationHandlers struct {
 	// be invoked if a preceding call to NotifyStakeDifficulty has been
 	// made to register for the notification and the function is non-nil.
 	OnStakeDifficulty func(hash *chainhash.Hash,
-		height int64,
+		height uint32,
 		stakeDiff int64)
 
 	// OnRecvTx is invoked when a transaction that receives funds to a
@@ -173,12 +173,12 @@ type NotificationHandlers struct {
 	// signaled on this notification, rather than relying on the return
 	// result of a rescan request, due to how dcrd may send various rescan
 	// notifications after the rescan request has already returned.
-	OnRescanFinished func(hash *chainhash.Hash, height int32, blkTime time.Time)
+	OnRescanFinished func(hash *chainhash.Hash, height uint32, blkTime time.Time)
 
 	// OnRescanProgress is invoked periodically when a rescan is underway.
 	// It will only be invoked if a preceding call to Rescan or
 	// RescanEndHeight has been made and the function is non-nil.
-	OnRescanProgress func(hash *chainhash.Hash, height int32, blkTime time.Time)
+	OnRescanProgress func(hash *chainhash.Hash, height uint32, blkTime time.Time)
 
 	// OnTxAccepted is invoked when a transaction is accepted into the
 	// memory pool.  It will only be invoked if a preceding call to
@@ -223,7 +223,7 @@ type NotificationHandlers struct {
 	// server such as dcrwallet.
 	OnVotesCreated func(txHash *chainhash.Hash,
 		blockHash *chainhash.Hash,
-		height int32,
+		height uint32,
 		sstxIn *chainhash.Hash,
 		voteBits uint16)
 
@@ -622,7 +622,7 @@ func (e wrongNumParams) Error() string {
 // parseChainNtfnParams parses out the block hash and height from the parameters
 // of blockconnected and blockdisconnected notifications.
 func parseChainNtfnParams(params []json.RawMessage) (*chainhash.Hash,
-	int32, time.Time, uint16, error) {
+	uint32, time.Time, uint16, error) {
 
 	if len(params) != 4 {
 		return nil, 0, time.Time{}, 0, wrongNumParams(len(params))
@@ -636,7 +636,7 @@ func parseChainNtfnParams(params []json.RawMessage) (*chainhash.Hash,
 	}
 
 	// Unmarshal second parameter as an integer.
-	var blockHeight int32
+	var blockHeight uint32
 	err = json.Unmarshal(params[1], &blockHeight)
 	if err != nil {
 		return nil, 0, time.Time{}, 0, err
@@ -669,9 +669,9 @@ func parseChainNtfnParams(params []json.RawMessage) (*chainhash.Hash,
 }
 
 func parseReorganizationNtfnParams(params []json.RawMessage) (*chainhash.Hash,
-	int32, *chainhash.Hash, int32, error) {
-	errorOut := func(err error) (*chainhash.Hash, int32, *chainhash.Hash,
-		int32, error) {
+	uint32, *chainhash.Hash, uint32, error) {
+	errorOut := func(err error) (*chainhash.Hash, uint32, *chainhash.Hash,
+		uint32, error) {
 		return nil, 0, nil, 0, err
 	}
 
@@ -687,7 +687,7 @@ func parseReorganizationNtfnParams(params []json.RawMessage) (*chainhash.Hash,
 	}
 
 	// Unmarshal second parameter as an integer.
-	var oldHeight int32
+	var oldHeight uint32
 	err = json.Unmarshal(params[1], &oldHeight)
 	if err != nil {
 		return errorOut(err)
@@ -701,7 +701,7 @@ func parseReorganizationNtfnParams(params []json.RawMessage) (*chainhash.Hash,
 	}
 
 	// Unmarshal second parameter as an integer.
-	var newHeight int32
+	var newHeight uint32
 	err = json.Unmarshal(params[3], &newHeight)
 	if err != nil {
 		return errorOut(err)
@@ -726,7 +726,7 @@ func parseReorganizationNtfnParams(params []json.RawMessage) (*chainhash.Hash,
 // hash, and block height from a WinningTickets notification.
 func parseWinningTicketsNtfnParams(params []json.RawMessage) (
 	*chainhash.Hash,
-	int64,
+	uint32,
 	[]*chainhash.Hash,
 	error) {
 
@@ -748,12 +748,11 @@ func parseWinningTicketsNtfnParams(params []json.RawMessage) (
 	}
 
 	// Unmarshal second parameter as an integer.
-	var blockHeight int32
+	var blockHeight uint32
 	err = json.Unmarshal(params[1], &blockHeight)
 	if err != nil {
 		return nil, 0, nil, err
 	}
-	bHeight := int64(blockHeight)
 
 	// Unmarshal third parameter as a slice.
 	tickets := make(map[string]string)
@@ -778,14 +777,14 @@ func parseWinningTicketsNtfnParams(params []json.RawMessage) (
 		t[itr] = ticketHash
 	}
 
-	return bHash, bHeight, t, nil
+	return bHash, blockHeight, t, nil
 }
 
 // parseSpentAndMissedTicketsNtfnParams parses out the block header hash, height,
 // winner number, and ticket map from a SpentAndMissedTickets notification.
 func parseSpentAndMissedTicketsNtfnParams(params []json.RawMessage) (
 	*chainhash.Hash,
-	int64,
+	uint32,
 	int64,
 	map[chainhash.Hash]bool,
 	error) {
@@ -808,12 +807,11 @@ func parseSpentAndMissedTicketsNtfnParams(params []json.RawMessage) (
 	}
 
 	// Unmarshal second parameter as an integer.
-	var blockHeight int32
+	var blockHeight uint32
 	err = json.Unmarshal(params[1], &blockHeight)
 	if err != nil {
 		return nil, 0, 0, nil, err
 	}
-	bh := int64(blockHeight)
 
 	// Unmarshal third parameter as an integer.
 	var stakeDiff int64
@@ -845,13 +843,13 @@ func parseSpentAndMissedTicketsNtfnParams(params []json.RawMessage) (
 		t[*ticketSha] = isSpent
 	}
 
-	return sha, bh, stakeDiff, t, nil
+	return sha, blockHeight, stakeDiff, t, nil
 }
 
 // parseNewTicketsNtfnParams parses out the block header hash, height,
 // winner number, overflow, and ticket map from a NewTickets notification.
 func parseNewTicketsNtfnParams(params []json.RawMessage) (*chainhash.Hash,
-	int64,
+	uint32,
 	int64,
 	map[chainhash.Hash]chainhash.Hash,
 	error) {
@@ -874,12 +872,11 @@ func parseNewTicketsNtfnParams(params []json.RawMessage) (*chainhash.Hash,
 	}
 
 	// Unmarshal second parameter as an integer.
-	var blockHeight int32
+	var blockHeight uint32
 	err = json.Unmarshal(params[1], &blockHeight)
 	if err != nil {
 		return nil, 0, 0, nil, err
 	}
-	bh := int64(blockHeight)
 
 	// Unmarshal third parameter as an integer.
 	var stakeDiff int64
@@ -912,14 +909,14 @@ func parseNewTicketsNtfnParams(params []json.RawMessage) (*chainhash.Hash,
 		t[*ticketSha] = *numberHash
 	}
 
-	return sha, bh, stakeDiff, t, nil
+	return sha, blockHeight, stakeDiff, t, nil
 }
 
 // parseStakeDifficultyNtfnParams parses out the list of block hash, block
 // height, and stake difficulty from a WinningTickets notification.
 func parseStakeDifficultyNtfnParams(params []json.RawMessage) (
 	*chainhash.Hash,
-	int64,
+	uint32,
 	int64,
 	error) {
 
@@ -941,12 +938,11 @@ func parseStakeDifficultyNtfnParams(params []json.RawMessage) (
 	}
 
 	// Unmarshal second parameter as an integer.
-	var blockHeight int32
+	var blockHeight uint32
 	err = json.Unmarshal(params[1], &blockHeight)
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	bHeight := int64(blockHeight)
 
 	// Unmarshal third parameter as an integer.
 	var stakeDiff int64
@@ -955,7 +951,7 @@ func parseStakeDifficultyNtfnParams(params []json.RawMessage) (
 		return nil, 0, 0, err
 	}
 
-	return bHash, bHeight, stakeDiff, nil
+	return bHash, blockHeight, stakeDiff, nil
 }
 
 // parseChainTxNtfnParams parses out the transaction and optional details about
@@ -1004,7 +1000,7 @@ func parseChainTxNtfnParams(params []json.RawMessage) (*dcrutil.Tx,
 
 // parseRescanProgressParams parses out the height of the last rescanned block
 // from the parameters of rescanfinished and rescanprogress notifications.
-func parseRescanProgressParams(params []json.RawMessage) (*chainhash.Hash, int32, time.Time, error) {
+func parseRescanProgressParams(params []json.RawMessage) (*chainhash.Hash, uint32, time.Time, error) {
 	if len(params) != 3 {
 		return nil, 0, time.Time{}, wrongNumParams(len(params))
 	}
@@ -1017,7 +1013,7 @@ func parseRescanProgressParams(params []json.RawMessage) (*chainhash.Hash, int32
 	}
 
 	// Unmarshal second parameter as an integer.
-	var height int32
+	var height uint32
 	err = json.Unmarshal(params[1], &height)
 	if err != nil {
 		return nil, 0, time.Time{}, err
@@ -1189,7 +1185,7 @@ func parseTicketPurchasedNtfnParams(params []json.RawMessage) (txHash *chainhash
 // from a recent ticket purchase in the wallet.
 func parseVoteCreatedNtfnParams(params []json.RawMessage) (txHash *chainhash.Hash,
 	blockHash *chainhash.Hash,
-	height int32,
+	height uint32,
 	sstxIn *chainhash.Hash,
 	voteBits uint16,
 	err error) {
@@ -1221,7 +1217,7 @@ func parseVoteCreatedNtfnParams(params []json.RawMessage) (txHash *chainhash.Has
 	}
 
 	// Unmarshal third parameter as an int32.
-	var h int32
+	var h uint32
 	err = json.Unmarshal(params[2], &h)
 	if err != nil {
 		return nil, nil, 0, nil, 0, err
