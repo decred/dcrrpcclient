@@ -664,16 +664,16 @@ func (r FutureGetStakeVersionsResult) Receive() (*dcrjson.GetStakeVersionsResult
 // See GetStakeVersions for the blocking version and more details.
 //
 // NOTE: This is a dcrd extension.
-func (c *Client) GetStakeVersionsAsync() FutureGetStakeVersionsResult {
-	cmd := dcrjson.NewGetStakeVersionsCmd()
+func (c *Client) GetStakeVersionsAsync(hash string, count int32) FutureGetStakeVersionsResult {
+	cmd := dcrjson.NewGetStakeVersionsCmd(hash, count)
 	return c.sendCmd(cmd)
 }
 
 // GetStakeVersions returns the current and next stake difficulty.
 //
 // NOTE: This is a dcrd extension.
-func (c *Client) GetStakeVersions() (*dcrjson.GetStakeVersionsResult, error) {
-	return c.GetStakeVersionsAsync().Receive()
+func (c *Client) GetStakeVersions(hash string, count int32) (*dcrjson.GetStakeVersionsResult, error) {
+	return c.GetStakeVersionsAsync(hash, count).Receive()
 }
 
 // FutureGetTicketPoolValueResult is a future promise to deliver the result of a
