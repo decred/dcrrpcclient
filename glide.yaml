@@ -8,7 +8,8 @@ import:
 - package: github.com/davecgh/go-spew
   subpackages:
   - spew
-- package: github.com/decred/dcrd
+- package: github.com/marcopeereboom/dcrd
+  version: e399e12dfa0e3cf3d36901ad4a97480ccb7b78da
   subpackages:
   - blockchain/stake
   - chaincfg/chainhash
