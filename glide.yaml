@@ -9,8 +9,6 @@ import:
   subpackages:
   - spew
 - package: github.com/decred/dcrd
-  repo: git@github.com:marcopeereboom/dcrd
-  version: e399e12dfa0e3cf3d36901ad4a97480ccb7b78da
   subpackages:
   - blockchain/stake
   - chaincfg/chainhash
