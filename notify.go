@@ -33,6 +33,7 @@ var (
 // reconnect.
 type notificationState struct {
 	notifyBlocks                bool
+	notifyVotes                 bool
 	notifyWinningTickets        bool
 	notifySpentAndMissedTickets bool
 	notifyNewTickets            bool
@@ -100,6 +101,12 @@ type NotificationHandlers struct {
 	// OnRelevantTxAccepted is invoked when an unmined transaction passes
 	// the client's transaction filter.
 	OnRelevantTxAccepted func(transaction []byte)
+
+	// OnNewVote is invoked when a new vote is recieved.  It will
+	// only be invoked if a preceding call to NotifyVotes has
+	// been made to register for the notification and the function
+	// is non-nil.
+	OnNewVote func(voteHash, blockHash string, vote bool)
 
 	// OnReorganization is invoked when the blockchain begins reorganizing.
 	// It will only be invoked if a preceding call to NotifyBlocks has been
@@ -264,6 +271,24 @@ func (c *Client) handleNotification(ntfn *rawNotification) {
 		}
 
 		c.ntfnHandlers.OnRelevantTxAccepted(transaction)
+
+	// OnNewVote
+	case dcrjson.NewVoteNtfnMethod:
+		// Ignore the notification if the client is not interested in
+		// it.
+		if c.ntfnHandlers.OnNewVote == nil {
+			return
+		}
+
+		voteHash, blockHash, vote, err :=
+			parseVoteNtfnParams(ntfn.Params)
+		if err != nil {
+			log.Warnf("Received invalid new vote "+
+				"notification: %v", err)
+			return
+		}
+
+		c.ntfnHandlers.OnNewVote(voteHash, blockHash, vote)
 
 	case dcrjson.ReorganizationNtfnMethod:
 		// Ignore the notification if the client is not interested in
@@ -579,6 +604,37 @@ func parseRelevantTxAcceptedParams(params []json.RawMessage) (transaction []byte
 	}
 
 	return parseHexParam(params[0])
+}
+
+// parseVoteNtfnParams parses out the hashes and vote from the parameters
+// of onnewvote notifications.
+func parseVoteNtfnParams(params []json.RawMessage) (string, string, bool, error) {
+	if len(params) != 3 {
+		return "", "", false, wrongNumParams(len(params))
+	}
+
+	// Unmarshal first parameter as a string.
+	var voteHash string
+	err := json.Unmarshal(params[0], &voteHash)
+	if err != nil {
+		return "", "", false, err
+	}
+
+	// Unmarshal second parameter as an string.
+	var blockHash string
+	err = json.Unmarshal(params[1], &blockHash)
+	if err != nil {
+		return "", "", false, err
+	}
+
+	// Unmarshal third parameter as bool.
+	var vote bool
+	err = json.Unmarshal(params[2], &vote)
+	if err != nil {
+		return "", "", false, err
+	}
+
+	return voteHash, blockHash, vote, nil
 }
 
 func parseReorganizationNtfnParams(params []json.RawMessage) (*chainhash.Hash,
@@ -1225,6 +1281,58 @@ func (c *Client) NotifyBlocksAsync() FutureNotifyBlocksResult {
 // NOTE: This is a dcrd extension and requires a websocket connection.
 func (c *Client) NotifyBlocks() error {
 	return c.NotifyBlocksAsync().Receive()
+}
+
+// FutureNotifyVotesResult is a future promise to deliver the result of a
+// NotifyBlocksAsync RPC invocation (or an applicable error).
+type FutureNotifyVotesResult chan *response
+
+// Receive waits for the response promised by the future and returns an error
+// if the registration was not successful.
+func (r FutureNotifyVotesResult) Receive() error {
+	_, err := receiveFuture(r)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// NotifyVotesAsync returns an instance of a type that can be used to get the
+// result of the RPC at some future time by invoking the Receive function on
+// the returned instance.
+//
+// See NotifyVotes for the blocking version and more details.
+//
+// NOTE: This is a dcrd extension and requires a websocket connection.
+func (c *Client) NotifyVotesAsync() FutureNotifyVotesResult {
+	// Not supported in HTTP POST mode.
+	if c.config.HTTPPostMode {
+		return newFutureError(ErrWebsocketsRequired)
+	}
+
+	// Ignore the notification if the client is not interested in
+	// notifications.
+	if c.ntfnHandlers == nil {
+		return newNilFutureResult()
+	}
+
+	cmd := dcrjson.NewNotifyVotesCmd()
+	return c.sendCmd(cmd)
+}
+
+// NotifyVotes registers the client to receive notifications when new votes are
+// received.  The notifications are
+// delivered to the notification handlers associated with the client.  Calling
+// this function has no effect if there are no notification handlers and will
+// result in an error if the client is configured to run in HTTP POST mode.
+//
+// The notifications delivered as a result of this call will be via one of
+// OnNewVote
+//
+// NOTE: This is a dcrd extension and requires a websocket connection.
+func (c *Client) NotifyVotes() error {
+	return c.NotifyVotesAsync().Receive()
 }
 
 // FutureNotifyWinningTicketsResult is a future promise to deliver the result of a
