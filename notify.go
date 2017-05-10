@@ -798,21 +798,20 @@ func parseNewTicketsNtfnParams(params []json.RawMessage) (*chainhash.Hash, int64
 	}
 
 	// Unmarshal fourth parameter as a slice.
-	tickets := make([]string, 0)
+	var tickets []string
 	err = json.Unmarshal(params[3], &tickets)
 	if err != nil {
 		return nil, 0, 0, nil, err
 	}
 	t := make([]*chainhash.Hash, len(tickets))
 
-	for _, ticketHashStr := range tickets {
-		// Create and cache Hash from tx hash.
+	for i, ticketHashStr := range tickets {
 		ticketHash, err := chainhash.NewHashFromStr(ticketHashStr)
 		if err != nil {
 			return nil, 0, 0, nil, err
 		}
 
-		t = append(t, ticketHash)
+		t[i] = ticketHash
 	}
 
 	return sha, bh, stakeDiff, t, nil
