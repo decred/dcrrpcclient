@@ -368,6 +368,56 @@ func (c *Client) GetWorkSubmit(data string) (bool, error) {
 	return c.GetWorkSubmitAsync(data).Receive()
 }
 
+type GetBlockTemplateResponse chan *response
+
+func (r GetBlockTemplateResponse) Receive() (*GetBlockTemplateResult, error) {
+	res, err := receiveFuture(r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal result as a boolean.
+	var gbtRet GetBlockTemplateResult
+	err = json.Unmarshal(res, &gbtRet)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gbtRet, nil
+}
+
+func (c *Client) GetBlockTemplateAsync(req *dcrjson.TemplateRequest) GetBlockTemplateResponse {
+	cmd := dcrjson.NewGetBlockTemplateCmd(req)
+	return c.sendCmd(cmd)
+}
+
+type GetBlockTemplateResult struct {
+	Header        string        `json:"header"`
+	Sigoplimit    int           `json:"sigoplimit"`
+	Sizelimit     int           `json:"sizelimit"`
+	Longpollid    string        `json:"longpollid"`
+	Target        string        `json:"target"`
+	Maxtime       uint64        `json:"maxtime"`
+	Mintime       uint64        `json:"mintime"`
+	Moncerange    string        `json:"moncerange"`
+	Stransactions []Transaction `json:"stransactions"`
+	Transactions  []Transaction `json:"transactions"`
+	Coinbasetxn   Transaction `json:"coinbasetxn"`
+}
+
+type Transaction struct {
+	Data    string `json:"data"`
+	Hash    string `json:"hash"`
+	Fee     int    `json:"fee"`
+	Sigops  int    `json:"sigops"`
+	Depends []int  `json:"depends"`
+	Txtype  string `json:"txtype"`
+}
+
+func (c *Client) GetBlockTemplate(req *dcrjson.TemplateRequest) (*GetBlockTemplateResult, error) {
+	return c.GetBlockTemplateAsync(req).Receive()
+}
+
 // FutureSubmitBlockResult is a future promise to deliver the result of a
 // SubmitBlockAsync RPC invocation (or an applicable error).
 type FutureSubmitBlockResult chan *response
